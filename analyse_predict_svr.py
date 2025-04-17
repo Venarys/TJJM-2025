@@ -2,11 +2,12 @@ import pandas as pd
 from sklearn.svm import SVR
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import os
 
 # 读取数据
-economic_history = pd.read_excel("economy.xlsx", index_col="Year")
-heavy_metal_history = pd.read_excel("environment.xlsx", index_col="Year")
-economic_future = pd.read_excel("economy_future.xlsx", index_col="Year")
+economic_history = pd.read_excel("eco_data/economy.xlsx", index_col="Year")
+heavy_metal_history = pd.read_excel("env_data/environment.xlsx", index_col="Year")
+economic_future = pd.read_excel("eco_data/economy_LSTM.xlsx", index_col="Year")
 
 # 合并历史数据（按年份对齐）
 merged_data = pd.merge(
@@ -36,17 +37,30 @@ for element in target_columns:
     X_train, X_test, y_train, y_test = train_test_split(
         X_scaled, y[element], test_size=0.2, random_state=42
     )
-    model = SVR(kernel="rbf")  # 使用 RBF 核函数
+    model = SVR(
+        kernel="rbf",
+        C=1.0,        # 初始惩罚参数（可调整）
+        gamma="scale"
+    )  # 使用 RBF 核函数
     model.fit(X_train, y_train)
     models[element] = model
 
-# 预测未来数据
-future_X = economic_future[economic_features]
+# 准备预测数据
+# 在 2023 年及之前，使用 economy.xlsx 的数据作为输入
+# 在 2024 年及以后，使用 economy_LSTM.xlsx 的数据作为输入
+future_years = list(range(2003, 2029))  # 2003-2028 年
+economic_combined = pd.concat([
+    economic_history.loc[2003:2023],  # 2003-2023 年的数据
+    economic_future.loc[2024:]       # 2024-2028 年的数据
+])
+
+# 标准化预测数据
+future_X = economic_combined[economic_features]
 future_X_scaled = scaler.transform(future_X)  # 使用相同的标准化参数
 
 # 创建预测结果字典
 predictions = {}
-for i, year in enumerate(economic_future.index):
+for i, year in enumerate(future_years):
     # 预测该行数据
     prediction_row = {}
     for element in target_columns:
@@ -57,12 +71,9 @@ for i, year in enumerate(economic_future.index):
 
 # 将预测结果转为 DataFrame
 pred_df = pd.DataFrame(predictions).T
-pred_df.index.name = "Year"
 
-# 调整行标签为 "第1年后", "第2年后" 等
-num_years = len(economic_future)
-relative_years = [f"第{i+1}年后" for i in range(num_years)]
-pred_df.index = relative_years
+# 设置索引为 2003-2028 年
+pred_df.index.name = "Year"
 
 # 保存结果到 Excel
 output_file = "predictions_svr.xlsx"

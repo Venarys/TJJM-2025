@@ -11,7 +11,7 @@ epochs = 200        # 训练轮次
 
 def main():
     # 读取数据
-    df = pd.read_excel("env_data/environment.xlsx", index_col="Year")
+    df = pd.read_excel("eco_data/economy.xlsx", index_col="Year")
     original_years = df.index  # 保存原始数据的年份索引
 
     # 标准化每个重金属列
@@ -122,9 +122,9 @@ def main():
     predicted_df.index.name = "Year"
     
     # 保存结果
-    predicted_df.to_excel("env_data/environment_LSTM.xlsx")
+    predicted_df.to_excel("eco_data/economy_LSTM.xlsx")
     
-    print("预测完成！结果已保存到 environment_LSTM.xlsx")
+    print("预测完成！结果已保存到 economy_LSTM.xlsx")
 
 if __name__ == "__main__":
     main()

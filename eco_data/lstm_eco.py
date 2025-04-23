@@ -52,9 +52,7 @@ def main():
         # 构建LSTM模型
         model = Sequential()
         model.add(LSTM(50, activation='tanh', return_sequences=True, input_shape=(n_steps_in, 1)))
-        # model.add(Dropout(0.2))
         model.add(LSTM(20, activation='tanh'))
-        # model.add(Dropout(0.2))
         model.add(Dense(n_steps_out))
         model.compile(optimizer='adam', loss='mse')
         
